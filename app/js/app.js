@@ -47,13 +47,37 @@ const App = (() => {
         document.querySelectorAll('.tab-item').forEach((tab) => {
             tab.addEventListener('click', () => {
                 const page = tab.dataset.page;
-                switchPage(page);
+                switchPage(page, true);
             });
         });
+
+        // 브라우저 뒤로가기/앞으로가기 처리
+        window.addEventListener('popstate', async (e) => {
+            if (e.state && e.state.page) {
+                // 운동 탭 관련 상태 복구
+                if (e.state.page === 'workout') {
+                    if (e.state.exerciseId) {
+                        // 특정 운동 상세로 온 경우
+                        const exercises = await DB.getAllExercises();
+                        const ex = exercises.find(item => item.id == e.state.exerciseId);
+                        if (ex) Workout.selectExercise(ex, false); // false: pushState 안 함
+                    } else {
+                        // 운동 리스트로 온 경우
+                        Workout.backToList(false); // false: 히스토리 조작 안 함
+                    }
+                }
+                switchPage(e.state.page, false); // false: pushState 안 함
+            } else {
+                switchPage('home', false);
+            }
+        });
+
+        // 초기 히스토리 상태 설정
+        history.replaceState({ page: 'home' }, '', '');
     }
 
     // ---- 페이지(탭) 전환 ----
-    function switchPage(pageName) {
+    function switchPage(pageName, pushState = true) {
         // 모든 페이지 숨기기
         document.querySelectorAll('.page').forEach((p) => p.classList.remove('active'));
 
@@ -65,6 +89,11 @@ const App = (() => {
         document.querySelectorAll('.tab-item').forEach((t) => t.classList.remove('active'));
         const activeTab = document.querySelector(`.tab-item[data-page="${pageName}"]`);
         if (activeTab) activeTab.classList.add('active');
+
+        // 히스토리 추가
+        if (pushState) {
+            history.pushState({ page: pageName }, '', '');
+        }
 
         // 페이지별 데이터 로드
         switch (pageName) {
@@ -131,7 +160,7 @@ const App = (() => {
         const recentEl = document.getElementById('recent-records');
 
         if (allRecords.length === 0) {
-            recentEl.innerHTML = '<p class="empty-message">아직 운동 기록이 없습니다.<br>운동을 시작해보세요!</p>';
+            recentEl.innerHTML = '<p class="empty-message">아직 등록된 운동 기록이 없네요.<br>오늘의 운동을 시작해서 기록을 채워보세요! 💪</p>';
             return;
         }
 
@@ -142,20 +171,33 @@ const App = (() => {
             dateGroups[r.date].push(r);
         });
 
-        // 최근 5일만 표시
+        // 최근 5일만 추출하여 내림차순 정렬
         const recentDates = Object.keys(dateGroups).sort().reverse().slice(0, 5);
 
         recentEl.innerHTML = recentDates.map((date) => {
             const records = dateGroups[date];
-            const exerciseNames = records.map((r) => r.exerciseName).join(', ');
+
+            // 종목명 한글 요약 (예: 벤치 프레스 외 2건)
+            let exerciseSummary = '';
+            if (records.length > 1) {
+                exerciseSummary = `${records[0].exerciseName} 외 ${records.length - 1}건`;
+            } else {
+                exerciseSummary = records[0].exerciseName;
+            }
+
             const d = new Date(date);
-            const dateLabel = d.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric', weekday: 'short' });
+            // 한국어 날짜 표현 (예: 2월 14일 토요일)
+            const dateLabel = d.toLocaleDateString('ko-KR', {
+                month: 'long',
+                day: 'numeric',
+                weekday: 'short'
+            });
 
             return `
-        <div class="recent-item">
-          <span class="recent-date">${dateLabel}</span>
-          <span class="recent-exercises">${exerciseNames}</span>
-          <span class="recent-count">${records.length}종목</span>
+        <div class="recent-item" style="cursor: pointer;" onclick="App.switchPage('history')">
+          <span class="recent-date" style="font-weight: 500; color: var(--accent-light);">${dateLabel}</span>
+          <span class="recent-exercises" style="flex: 1; margin-left: 15px; color: var(--text-primary);">${exerciseSummary}</span>
+          <span class="recent-count" style="font-size: var(--font-size-xs); color: var(--text-muted);">${records.length}종목 완료</span>
         </div>
       `;
         }).join('');
@@ -163,6 +205,19 @@ const App = (() => {
 
     // ---- 설정 페이지 이벤트 바인딩 ----
     function setupSettings() {
+        // 타이머 설정 로드
+        const timerInput = document.getElementById('setting-timer-duration');
+        const savedTimer = localStorage.getItem('restTimerDuration') || '60';
+        timerInput.value = savedTimer;
+
+        // 타이머 설정 변경 시 저장
+        timerInput.addEventListener('change', (e) => {
+            let val = parseInt(e.target.value);
+            if (isNaN(val) || val < 5) val = 60;
+            localStorage.setItem('restTimerDuration', val);
+            showToast(`휴식 타이머가 ${val}초로 설정되었습니다.`, 'info');
+        });
+
         // 엑셀 파일 업로드
         document.getElementById('excel-upload').addEventListener('change', handleExcelUpload);
 

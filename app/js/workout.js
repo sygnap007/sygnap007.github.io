@@ -82,7 +82,7 @@ const Workout = (() => {
     }
 
     // ---- 운동 선택 → 세트 입력 화면으로 전환 ----
-    function selectExercise(exercise) {
+    function selectExercise(exercise, pushHistory = true) {
         currentExercise = exercise;
 
         // 운동 정보 표시
@@ -96,6 +96,11 @@ const Workout = (() => {
         document.getElementById('workout-select').style.display = 'none';
         const workoutInput = document.getElementById('workout-input');
         workoutInput.style.display = 'block';
+
+        // 히스토리 추가 (뒤로가기 제스처 지원)
+        if (pushHistory) {
+            history.pushState({ page: 'workout', exerciseId: exercise.id }, '', '');
+        }
 
         // 메모 필드 초기화
         if (!document.getElementById('workout-memo')) {
@@ -163,10 +168,17 @@ const Workout = (() => {
 
     // ---- 타이머 시작 로직 ----
     function startTimer(row) {
-        // 1. 운동 이름에서 시간 추출 (예: "Plank 60" -> 60)
+        // 1. 설정값 또는 운동 이름에서 시간 추출
+        const savedDuration = localStorage.getItem('restTimerDuration');
         const name = currentExercise.name;
-        const match = name.match(/\d+/); // 이름에 숫자가 있는지 확인
-        let seconds = match ? parseInt(match[0]) : 60; // 없으면 기본 60초
+        const match = name.match(/\d+/); // 이름에 숫자가 있는지 확인 (개별 설정 우선)
+
+        let seconds = 60;
+        if (match) {
+            seconds = parseInt(match[0]);
+        } else if (savedDuration) {
+            seconds = parseInt(savedDuration);
+        }
 
         // 2. 해당 행의 타이머 요소 찾기
         const timerEl = row.querySelector('.row-timer');
@@ -215,8 +227,14 @@ const Workout = (() => {
         el.textContent = `${min.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
     }
 
-    // ---- 알람음 발생 (Web Audio API) ----
+    // ---- 알람음 발생 및 진동 (Web Audio & Vibration API) ----
     function playAlarm() {
+        // 1. 진동 (모바일 지원 시)
+        if ('vibrate' in navigator) {
+            navigator.vibrate([200, 100, 200]); // 0.2초 진동, 0.1초 휴식, 0.2초 진동
+        }
+
+        // 2. 알람음
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
@@ -289,7 +307,7 @@ const Workout = (() => {
     }
 
     // ---- 운동 선택 화면으로 돌아가기 ----
-    function backToList() {
+    function backToList(popHistory = true) {
         currentExercise = null;
         document.getElementById('workout-select').style.display = 'block';
         document.getElementById('workout-input').style.display = 'none';
@@ -305,7 +323,10 @@ const Workout = (() => {
                 App.updateDashboard();  // 홈 화면 통계 갱신
             }
         });
-        document.getElementById('btn-back-to-list').addEventListener('click', backToList);
+        document.getElementById('btn-back-to-list').addEventListener('click', () => {
+            // 버튼 클릭 시에는 히스토리를 한 단계 뒤로 보냄 (popstate 이벤트를 통해 backToList가 호출됨)
+            history.back();
+        });
     }
 
     // ---- 공개 API ----

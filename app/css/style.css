@@ -91,8 +91,9 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* 모바일에서 당겨서 새로고침 방지 */
-  overscroll-behavior: none;
+  /* 모바일에서 당겨서 새로고침 방지 (수직 방향만) */
+  overscroll-behavior-y: contain;
+  overscroll-behavior-x: auto;
 }
 
 /* ---- 헤더 ---- */
@@ -599,6 +600,8 @@ body {
   padding: 10px;
   width: 100%;
   transition: all var(--transition-fast);
+  appearance: none;
+  -webkit-appearance: none;
   -moz-appearance: textfield;
 }
 
@@ -695,6 +698,19 @@ body {
 }
 
 /* ---- 설정 카드 ---- */
+.settings-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+@media (max-width: 600px) {
+  .settings-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 .card-setting {
   display: flex;
   flex-direction: column;

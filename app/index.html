@@ -168,15 +168,29 @@
     <section id="page-settings" class="page">
       <h2 class="page-title">설정</h2>
 
-      <!-- 엑셀 업로드 -->
-      <div class="card card-setting">
-        <h3 class="card-title">📊 운동 리스트 관리</h3>
-        <p class="setting-desc">엑셀(.xlsx) 파일로 운동 리스트를 업로드하세요.</p>
-        <label class="btn btn-secondary upload-btn" for="excel-upload">
-          📁 엑셀 파일 선택
-        </label>
-        <input type="file" id="excel-upload" accept=".xlsx,.xls" style="display:none;">
-        <div id="upload-status" class="upload-status"></div>
+      <!-- 설정 상단: 운동 리스트 관리(좌) & 타이머 설정(우) -->
+      <div class="settings-row">
+        <!-- 엑셀 업로드 (좌측) -->
+        <div class="card card-setting">
+          <h3 class="card-title">📊 운동 리스트 관리</h3>
+          <p class="setting-desc">엑셀(.xlsx) 파일로 운동 리스트를 업로드하세요.</p>
+          <label class="btn btn-secondary upload-btn" for="excel-upload">
+            📁 파일 선택
+          </label>
+          <input type="file" id="excel-upload" accept=".xlsx,.xls" style="display:none;">
+          <div id="upload-status" class="upload-status"></div>
+        </div>
+
+        <!-- 타이머 설정 (우측) -->
+        <div class="card card-setting" style="border: 1px solid var(--accent);">
+          <h3 class="card-title">⏱️ 휴식 타이머 설정</h3>
+          <p class="setting-desc">세트 완료 후 자동으로 시작되는 휴식 시간입니다.</p>
+          <div class="input-group" style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
+            <input type="number" id="setting-timer-duration" class="set-input" value="60" min="5" step="5"
+              style="width: 80px; text-align: center; background: var(--bg-secondary); border: 2px solid var(--accent);">
+            <span style="font-weight: 600; color: var(--accent-light);">초</span>
+          </div>
+        </div>
       </div>
 
       <!-- 데이터 관리 -->

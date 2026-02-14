@@ -1,0 +1,23 @@
+# 환경 변수 및 민감 정보
+.env
+
+# 임시 파일 디렉토리
+.tmp/
+
+# Google OAuth 인증 파일
+credentials.json
+token.json
+
+# IDE 설정
+.vscode/
+.idea/
+
+# OS 생성 파일
+Thumbs.db
+.DS_Store
+
+# 가상환경
+venv/
+.venv/
+__pycache__/
+*.pyc

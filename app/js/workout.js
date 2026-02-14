@@ -227,27 +227,18 @@ const Workout = (() => {
         el.textContent = `${min.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
     }
 
-    // ---- 알람음 발생 및 진동 (Web Audio & Vibration API) ----
+    // ---- 알람 진동 (Vibration API) ----
     function playAlarm() {
         // 1. 진동 (모바일 지원 시)
+        // [진동, 휴식] 패턴을 10번 반복 (0.3초 진동, 0.2초 휴식)
         if ('vibrate' in navigator) {
-            navigator.vibrate([200, 100, 200]); // 0.2초 진동, 0.1초 휴식, 0.2초 진동
+            const pattern = [];
+            for (let i = 0; i < 10; i++) {
+                pattern.push(300); // 0.3초 진동
+                pattern.push(200); // 0.2초 휴식
+            }
+            navigator.vibrate(pattern);
         }
-
-        // 2. 알람음
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(880, ctx.currentTime); // A5 음역
-        gain.gain.setValueAtTime(0.5, ctx.currentTime);
-
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-
-        osc.start();
-        osc.stop(ctx.currentTime + 0.5); // 0.5초간 비프음
     }
 
     // ---- 세트 추가 ----
